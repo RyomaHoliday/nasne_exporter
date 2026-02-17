@@ -3,7 +3,9 @@ package main
 import (
 	"flag"
 	"log"
+	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -37,7 +39,7 @@ func main() {
 		if err != nil {
 			log.Fatalf("create nasne client for %s: %v", rawURL, err)
 		}
-		targets = append(targets, exporter.TargetFetcher{Target: rawURL, Fetcher: client})
+		targets = append(targets, exporter.TargetFetcher{Target: safeTargetLabel(rawURL), Fetcher: client})
 	}
 
 	collector := exporter.NewCollector(targets, *scrapeTimeout)
@@ -83,6 +85,26 @@ func splitCSV(s string) []string {
 		}
 	}
 	return out
+}
+
+func safeTargetLabel(rawURL string) string {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return rawURL
+	}
+	host := u.Hostname()
+	if host == "" {
+		return rawURL
+	}
+	port := u.Port()
+	if port == "" {
+		if u.Scheme == "https" {
+			port = "443"
+		} else {
+			port = "80"
+		}
+	}
+	return net.JoinHostPort(host, port)
 }
 
 func envOrDefault(k, d string) string {

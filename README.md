@@ -14,7 +14,7 @@ This project uses the official Prometheus Go client library (`prometheus/client_
 
 ## Metrics
 
-Exporter metrics include (all gauges now include `target` label for multi-device support):
+Exporter metrics include (all gauges now include a normalized `target` label like `192.168.11.2:64210` for multi-device support):
 
 - `nasne_up`
 - `nasne_collect_duration_seconds`

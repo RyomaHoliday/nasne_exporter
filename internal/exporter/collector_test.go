@@ -23,8 +23,15 @@ func (f fakeFetcher) FetchSnapshot(_ context.Context) (nasne.Snapshot, error) {
 	return f.snapshot, nil
 }
 
+func TestCollectorUnhealthyBeforeFirstScrape(t *testing.T) {
+	c := NewCollector([]TargetFetcher{{Target: "192.168.11.1:64210", Fetcher: fakeFetcher{snapshot: nasne.Snapshot{Name: "nasne-a"}}}}, time.Second)
+	if c.Healthy() {
+		t.Fatal("collector should be unhealthy before first scrape")
+	}
+}
+
 func TestCollectorHealthyOnSuccess(t *testing.T) {
-	c := NewCollector([]TargetFetcher{{Target: "http://192.168.11.1:64210", Fetcher: fakeFetcher{snapshot: nasne.Snapshot{Name: "nasne-a"}}}}, time.Second)
+	c := NewCollector([]TargetFetcher{{Target: "192.168.11.1:64210", Fetcher: fakeFetcher{snapshot: nasne.Snapshot{Name: "nasne-a"}}}}, time.Second)
 	r := prometheus.NewRegistry()
 	r.MustRegister(c)
 
@@ -40,8 +47,8 @@ func TestCollectorHealthyOnSuccess(t *testing.T) {
 
 func TestCollectorHealthyOnPartialError(t *testing.T) {
 	c := NewCollector([]TargetFetcher{
-		{Target: "http://192.168.11.1:64210", Fetcher: fakeFetcher{snapshot: nasne.Snapshot{Name: "nasne-a"}}},
-		{Target: "http://192.168.11.2:64210", Fetcher: fakeFetcher{err: errors.New("boom")}},
+		{Target: "192.168.11.1:64210", Fetcher: fakeFetcher{snapshot: nasne.Snapshot{Name: "nasne-a"}}},
+		{Target: "192.168.11.2:64210", Fetcher: fakeFetcher{err: errors.New("boom")}},
 	}, time.Second)
 	r := prometheus.NewRegistry()
 	r.MustRegister(c)
