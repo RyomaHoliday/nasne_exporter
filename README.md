@@ -73,6 +73,18 @@ scrape_configs:
       - targets: ["nasne-exporter:9900"]
 ```
 
+## Release (GitHub + GHCR)
+
+1. Push this repository to GitHub.
+2. Create a tag like `v0.1.0` and push it.
+3. GitHub Actions workflow (`.github/workflows/release.yml`) will build and publish to GHCR:
+   - `ghcr.io/<owner>/nasne_exporter:v0.1.0`
+   - `ghcr.io/<owner>/nasne_exporter:latest`
+
 ## Notes / caveats
 
-nasne firmware and API payloads can differ by model/version. This exporter intentionally uses a tolerant JSON extraction approach over configurable endpoint paths. If your device exposes different keys/paths, set `NASNE_ENDPOINTS` and adjust extraction logic accordingly.
+nasne firmware and API payloads can differ by model/version. This exporter uses known nasne API endpoints (`status/*`, `recorded/*`, `schedule/*`) and should work with typical nasne setups.
+
+## Acknowledgements
+
+Special thanks to [hatotaka/nasne_exporter](https://github.com/hatotaka/nasne_exporter) for pioneering the nasne Prometheus exporter ecosystem and for serving as a helpful reference while designing this implementation.
