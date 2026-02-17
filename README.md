@@ -36,7 +36,7 @@ Flags (with env var fallback):
 - `--listen-address` (`LISTEN_ADDRESS`, default `:9900`)
 - `--metrics-path` (`METRICS_PATH`, default `/metrics`)
 - `--health-path` (`HEALTH_PATH`, default `/healthz`)
-- (エンドポイントはnasne API標準パスを使用: `status/*`, `recorded/*`, `schedule/*`)
+- Uses standard nasne API endpoint groups: `status/*`, `recorded/*`, `schedule/*`
 - `--http-timeout` (`HTTP_TIMEOUT`, default `5s`)
 - `--scrape-timeout` (`SCRAPE_TIMEOUT`, default `10s`)
 
@@ -78,8 +78,8 @@ scrape_configs:
 1. Push this repository to GitHub.
 2. Create a tag like `v0.1.0` and push it.
 3. GitHub Actions workflow (`.github/workflows/release.yml`) will build and publish to GHCR:
-   - `ghcr.io/<owner>/nasne_exporter:v0.1.0`
-   - `ghcr.io/<owner>/nasne_exporter:latest`
+   - `ghcr.io/ryomaholiday/nasne_exporter:v0.1.0`
+   - `ghcr.io/ryomaholiday/nasne_exporter:latest`
 
 ## Notes / caveats
 
