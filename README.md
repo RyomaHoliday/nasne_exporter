@@ -1,0 +1,78 @@
+# nasne_exporter
+
+Prometheus exporter for Sony nasne.
+
+This project uses the official Prometheus Go client library (`prometheus/client_golang`) and is designed to run both directly and as a container image.
+
+## Features
+
+- `GET /metrics` endpoint (Prometheus format)
+- `GET /healthz` endpoint
+- Configurable nasne base URL and API endpoints
+- Multi-stage Docker build
+- GitHub Actions release workflow for GHCR (`v*` tags)
+
+## Metrics
+
+Exporter metrics include:
+
+- `nasne_up`
+- `nasne_collect_duration_seconds`
+- `nasne_info{name,product_name,hardware_version,software_version}`
+- `nasne_hdd_size_bytes`
+- `nasne_hdd_usage_bytes`
+- `nasne_dtcpip_clients`
+- `nasne_recordings`
+- `nasne_recorded_titles`
+- `nasne_reserved_titles`
+- `nasne_reserved_conflict_titles`
+- `nasne_reserved_notfound_titles`
+
+## Configuration
+
+Flags (with env var fallback):
+
+- `--nasne-url` (`NASNE_URL`) **required**
+- `--listen-address` (`LISTEN_ADDRESS`, default `:9900`)
+- `--metrics-path` (`METRICS_PATH`, default `/metrics`)
+- `--health-path` (`HEALTH_PATH`, default `/healthz`)
+- `--nasne-endpoints` (`NASNE_ENDPOINTS`, default `/status,/storage,/schedule`)
+- `--http-timeout` (`HTTP_TIMEOUT`, default `5s`)
+- `--scrape-timeout` (`SCRAPE_TIMEOUT`, default `10s`)
+
+## Run locally
+
+```bash
+go mod tidy
+go run ./cmd/nasne_exporter \
+  --nasne-url=http://192.168.1.10:64210
+```
+
+## Build binary
+
+```bash
+go build ./cmd/nasne_exporter
+```
+
+## Docker
+
+```bash
+docker build -t nasne_exporter:local .
+docker run --rm -p 9900:9900 \
+  -e NASNE_URL=http://192.168.1.10:64210 \
+  nasne_exporter:local
+```
+
+## Prometheus scrape example
+
+```yaml
+scrape_configs:
+  - job_name: nasne
+    scrape_interval: 30s
+    static_configs:
+      - targets: ["nasne-exporter:9900"]
+```
+
+## Notes / caveats
+
+nasne firmware and API payloads can differ by model/version. This exporter intentionally uses a tolerant JSON extraction approach over configurable endpoint paths. If your device exposes different keys/paths, set `NASNE_ENDPOINTS` and adjust extraction logic accordingly.
