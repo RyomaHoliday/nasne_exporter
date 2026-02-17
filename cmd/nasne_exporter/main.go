@@ -21,7 +21,6 @@ func main() {
 		listenAddress = flag.String("listen-address", envOrDefault("LISTEN_ADDRESS", ":9900"), "address to listen on")
 		metricsPath   = flag.String("metrics-path", envOrDefault("METRICS_PATH", "/metrics"), "metrics HTTP path")
 		healthPath    = flag.String("health-path", envOrDefault("HEALTH_PATH", "/healthz"), "health check path")
-		endpointCSV   = flag.String("nasne-endpoints", envOrDefault("NASNE_ENDPOINTS", "/status,/storage,/schedule"), "comma-separated nasne API paths")
 		httpTimeout   = flag.Duration("http-timeout", envDuration("HTTP_TIMEOUT", 5*time.Second), "timeout per HTTP request to nasne")
 		scrapeTimeout = flag.Duration("scrape-timeout", envDuration("SCRAPE_TIMEOUT", 10*time.Second), "timeout for each target scrape")
 	)
@@ -34,7 +33,7 @@ func main() {
 
 	targets := make([]exporter.TargetFetcher, 0, len(nasneURLs))
 	for _, rawURL := range nasneURLs {
-		client, err := nasne.NewClient(rawURL, splitCSV(*endpointCSV), *httpTimeout)
+		client, err := nasne.NewClient(rawURL, *httpTimeout)
 		if err != nil {
 			log.Fatalf("create nasne client for %s: %v", rawURL, err)
 		}

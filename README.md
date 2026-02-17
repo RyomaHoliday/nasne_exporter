@@ -8,7 +8,7 @@ This project uses the official Prometheus Go client library (`prometheus/client_
 
 - `GET /metrics` endpoint (Prometheus format)
 - `GET /healthz` endpoint
-- Configurable nasne base URL and API endpoints
+- Configurable nasne base URL (single / multiple)
 - Multi-stage Docker build
 - GitHub Actions release workflow for GHCR (`v*` tags)
 
@@ -36,7 +36,7 @@ Flags (with env var fallback):
 - `--listen-address` (`LISTEN_ADDRESS`, default `:9900`)
 - `--metrics-path` (`METRICS_PATH`, default `/metrics`)
 - `--health-path` (`HEALTH_PATH`, default `/healthz`)
-- `--nasne-endpoints` (`NASNE_ENDPOINTS`, default `/status,/storage,/schedule`)
+- (エンドポイントはnasne API標準パスを使用: `status/*`, `recorded/*`, `schedule/*`)
 - `--http-timeout` (`HTTP_TIMEOUT`, default `5s`)
 - `--scrape-timeout` (`SCRAPE_TIMEOUT`, default `10s`)
 
