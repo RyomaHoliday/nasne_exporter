@@ -14,7 +14,7 @@ This project uses the official Prometheus Go client library (`prometheus/client_
 
 ## Metrics
 
-Exporter metrics include:
+Exporter metrics include (all gauges now include `target` label for multi-device support):
 
 - `nasne_up`
 - `nasne_collect_duration_seconds`
@@ -32,7 +32,7 @@ Exporter metrics include:
 
 Flags (with env var fallback):
 
-- `--nasne-url` (`NASNE_URL`) **required**
+- `--nasne-url` (`NASNE_URL`) **required** (comma-separated for multiple nasne)
 - `--listen-address` (`LISTEN_ADDRESS`, default `:9900`)
 - `--metrics-path` (`METRICS_PATH`, default `/metrics`)
 - `--health-path` (`HEALTH_PATH`, default `/healthz`)
@@ -45,7 +45,7 @@ Flags (with env var fallback):
 ```bash
 go mod tidy
 go run ./cmd/nasne_exporter \
-  --nasne-url=http://192.168.1.10:64210
+  --nasne-url=http://192.168.11.1:64210,http://192.168.11.2:64210
 ```
 
 ## Build binary
@@ -59,7 +59,7 @@ go build ./cmd/nasne_exporter
 ```bash
 docker build -t nasne_exporter:local .
 docker run --rm -p 9900:9900 \
-  -e NASNE_URL=http://192.168.1.10:64210 \
+  -e NASNE_URL=http://192.168.11.1:64210,http://192.168.11.2:64210 \
   nasne_exporter:local
 ```
 

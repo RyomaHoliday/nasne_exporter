@@ -17,26 +17,31 @@ import (
 
 func main() {
 	var (
-		nasneURL      = flag.String("nasne-url", envOrDefault("NASNE_URL", ""), "nasne base URL (e.g. http://192.168.1.10:64210)")
+		nasneURLCSV   = flag.String("nasne-url", envOrDefault("NASNE_URL", ""), "comma-separated nasne base URLs (e.g. http://192.168.11.1:64210,http://192.168.11.2:64210)")
 		listenAddress = flag.String("listen-address", envOrDefault("LISTEN_ADDRESS", ":9900"), "address to listen on")
 		metricsPath   = flag.String("metrics-path", envOrDefault("METRICS_PATH", "/metrics"), "metrics HTTP path")
 		healthPath    = flag.String("health-path", envOrDefault("HEALTH_PATH", "/healthz"), "health check path")
 		endpointCSV   = flag.String("nasne-endpoints", envOrDefault("NASNE_ENDPOINTS", "/status,/storage,/schedule"), "comma-separated nasne API paths")
 		httpTimeout   = flag.Duration("http-timeout", envDuration("HTTP_TIMEOUT", 5*time.Second), "timeout per HTTP request to nasne")
-		scrapeTimeout = flag.Duration("scrape-timeout", envDuration("SCRAPE_TIMEOUT", 10*time.Second), "timeout for total scrape")
+		scrapeTimeout = flag.Duration("scrape-timeout", envDuration("SCRAPE_TIMEOUT", 10*time.Second), "timeout for each target scrape")
 	)
 	flag.Parse()
 
-	if *nasneURL == "" {
+	nasneURLs := splitCSV(*nasneURLCSV)
+	if len(nasneURLs) == 0 {
 		log.Fatal("nasne-url (or NASNE_URL) is required")
 	}
 
-	client, err := nasne.NewClient(*nasneURL, splitCSV(*endpointCSV), *httpTimeout)
-	if err != nil {
-		log.Fatalf("create nasne client: %v", err)
+	targets := make([]exporter.TargetFetcher, 0, len(nasneURLs))
+	for _, rawURL := range nasneURLs {
+		client, err := nasne.NewClient(rawURL, splitCSV(*endpointCSV), *httpTimeout)
+		if err != nil {
+			log.Fatalf("create nasne client for %s: %v", rawURL, err)
+		}
+		targets = append(targets, exporter.TargetFetcher{Target: rawURL, Fetcher: client})
 	}
 
-	collector := exporter.NewCollector(client, *scrapeTimeout)
+	collector := exporter.NewCollector(targets, *scrapeTimeout)
 	registry := prometheus.NewRegistry()
 	registry.MustRegister(collector)
 
@@ -63,6 +68,7 @@ func main() {
 	log.Printf("starting nasne_exporter on %s", *listenAddress)
 	log.Printf("metrics endpoint: %s", *metricsPath)
 	log.Printf("health endpoint: %s", *healthPath)
+	log.Printf("targets: %d", len(nasneURLs))
 	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("http server failed: %v", err)
 	}

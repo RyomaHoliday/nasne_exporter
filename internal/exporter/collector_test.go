@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/testutil"
 
 	"github.com/ryomaholiday/nasne_exporter/internal/nasne"
 )
@@ -24,31 +23,35 @@ func (f fakeFetcher) FetchSnapshot(_ context.Context) (nasne.Snapshot, error) {
 	return f.snapshot, nil
 }
 
-func TestCollectorUpMetricOnSuccess(t *testing.T) {
-	c := NewCollector(fakeFetcher{snapshot: nasne.Snapshot{Name: "nasne"}}, time.Second)
+func TestCollectorHealthyOnSuccess(t *testing.T) {
+	c := NewCollector([]TargetFetcher{{Target: "http://192.168.11.1:64210", Fetcher: fakeFetcher{snapshot: nasne.Snapshot{Name: "nasne-a"}}}}, time.Second)
 	r := prometheus.NewRegistry()
 	r.MustRegister(c)
 
-	if got := testutil.ToFloat64(prometheus.NewGaugeFunc(prometheus.GaugeOpts{}, func() float64 {
-		mfs, _ := r.Gather()
-		for _, mf := range mfs {
-			if mf.GetName() == "nasne_up" && len(mf.Metric) > 0 {
-				return mf.Metric[0].GetGauge().GetValue()
-			}
-		}
-		return -1
-	})); got != 1 {
-		t.Fatalf("expected nasne_up=1, got %v", got)
+	_, err := r.Gather()
+	if err != nil {
+		t.Fatalf("gather failed: %v", err)
+	}
+
+	if !c.Healthy() {
+		t.Fatal("collector should be healthy after successful scrape")
 	}
 }
 
-func TestCollectorHealthyOnError(t *testing.T) {
-	c := NewCollector(fakeFetcher{err: errors.New("boom")}, time.Second)
+func TestCollectorHealthyOnPartialError(t *testing.T) {
+	c := NewCollector([]TargetFetcher{
+		{Target: "http://192.168.11.1:64210", Fetcher: fakeFetcher{snapshot: nasne.Snapshot{Name: "nasne-a"}}},
+		{Target: "http://192.168.11.2:64210", Fetcher: fakeFetcher{err: errors.New("boom")}},
+	}, time.Second)
 	r := prometheus.NewRegistry()
 	r.MustRegister(c)
-	_, _ = r.Gather()
+
+	_, err := r.Gather()
+	if err != nil {
+		t.Fatalf("gather failed: %v", err)
+	}
 
 	if c.Healthy() {
-		t.Fatal("collector should be unhealthy after scrape error")
+		t.Fatal("collector should be unhealthy when at least one target fails")
 	}
 }
